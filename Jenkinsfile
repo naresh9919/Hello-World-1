@@ -20,11 +20,19 @@ pipeline {
                     sh "mvn sonar:sonar"
                 }
             }
+            post {
+                success {
+                    echo 'Archiving the artifacts'
+                    archiveArtifacts artifacts: '**/target/*.war'
+                }
+            }
         }
-        stage("Quality Gate Status"){
-            steps {
-                script {
-                    waitForQualityGate abortPipeline: false, credentialsId: 'sonar_pwd'
+        stage ('Deployments'){
+            parallel {
+                stage ("Deploy to Staging"){
+                    steps {
+                        deploy adapters: [tomcat7(credentialsId: 'tomcat_pwd', path: '', url: 'http://3.109.121.131:8080/')], contextPath: null, war: '**/*.war'
+                    }
                 }
             }
         }
